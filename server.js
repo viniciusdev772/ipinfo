@@ -3,49 +3,24 @@ const app = express();
 const ipinfo = require('ipinfo');
 const port = process.env.PORT || 3000;
 
-// Função para obter o endereço IP
-function obterEnderecoIp(req) {
-  let enderecoIp;
-
-  if (req.headers['cf-connecting-ip']) {
-    // Se estiver passando pelo Cloudflare
-    enderecoIp = req.headers['cf-connecting-ip'];
-  } else if (req.headers['x-forwarded-for']) {
-    // Se não estiver passando pelo Cloudflare, mas estiver usando um proxy
-    enderecoIp = req.headers['x-forwarded-for'];
-  } else {
-    // Caso contrário, obtém o IP diretamente
-    enderecoIp = req.ip;
-  }
-
-  return enderecoIp;
-}
+// Middleware
+const obterEnderecoIpMiddleware = require('./middlewares/obterEnderecoIpMiddleware');
+app.use(obterEnderecoIpMiddleware);
 
 // Rota principal
 app.get('/', async (req, res) => {
-  const enderecoIp = obterEnderecoIp(req);
-  res.json({ enderecoIp });
+  res.json({ enderecoIp: req.enderecoIp });
 });
 
 // Rota para obter informações do IP
 app.get('/ip/:ipAddress', async (req, res) => {
-  let targetIP;
-
-  // Verificar se req.params.ipAddress não é vazia
-  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
-    // Se não for vazia, use o IP inserido
-    targetIP = req.params.ipAddress.trim(); // Substitua pelo IP desejado
-  } else {
-    // Caso contrário, use a função para obter o IP
-    targetIP = obterEnderecoIp(req);
-  }
+  const targetIP = req.params.ipAddress || req.enderecoIp;
 
   ipinfo(targetIP, (err, data) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
     } else {
-      // Remover a propriedade readme do objeto de resposta
       delete data.readme;
       res.json(data);
     }
@@ -54,15 +29,11 @@ app.get('/ip/:ipAddress', async (req, res) => {
 
 // Rota para obter informações do IP padrão
 app.get('/ip', async (req, res) => {
-  // Chamar a função para obter o IP padrão
-  const targetIP = obterEnderecoIp(req);
-
-  ipinfo(targetIP, (err, data) => {
+  ipinfo(req.enderecoIp, (err, data) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
     } else {
-      // Remover a propriedade readme do objeto de resposta
       delete data.readme;
       res.json(data);
     }
