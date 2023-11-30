@@ -11,8 +11,8 @@ app.get('/', (req, res) => {
       console.error(err);
       res.status(500).send('Erro ao obter informações do IP');
     } else {
-      //res.json(informacoesIp);
-      res.status(500).send('Erro ao obter informações do IP');
+      res.json(informacoesIp);
+      //res.status(500).send('Erro ao obter informações do IP');
     }
   });
 });
