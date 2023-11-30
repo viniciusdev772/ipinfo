@@ -12,6 +12,8 @@ app.get('/', async (req, res) => {
   res.json({ enderecoIp: req.enderecoIp });
 });
 
+
+
 // Rota para obter informações do IP
 app.get('/ip/:ipAddress', async (req, res) => {
   const targetIP = req.params.ipAddress || req.enderecoIp;
