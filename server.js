@@ -60,4 +60,15 @@ app.get('/ip', async (req, res) => {
   ipinfo(req.enderecoIp, (err, data) => {
     if (err) {
       console.error(err);
-      res.status(50
+      res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
+    } else {
+      delete data.readme;
+      res.json(data);
+    }
+  });
+});
+
+// Inicia o servidor
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Servidor rodando em http://0.0.0.0:${port}`);
+});
