@@ -1,0 +1,20 @@
+# Módulos npm instalados
+/node_modules
+
+# Saída de logs
+logs
+*.log
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de compilação
+*.out
+*.min.js
+
+# Ambiente de desenvolvimento
+.env
+
+# Dependências específicas do sistema (ex. npm-debug.log)
+npm-debug.log
