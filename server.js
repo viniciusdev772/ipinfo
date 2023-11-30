@@ -3,7 +3,7 @@ const app = express();
 const ipinfo = require('ipinfo');
 const port = process.env.PORT || 3000;
 
-app.get('/', async (req, res) => {
+function enderecoIp(req){
   if (!!req.headers['cf-connecting-ip']) {
     // Se estiver passando pelo Cloudflare
     enderecoIp = req.headers['cf-connecting-ip'];
@@ -14,8 +14,12 @@ app.get('/', async (req, res) => {
     // Caso contrário, obtém o IP diretamente
     enderecoIp = req.ip;
   }
+  return enderecoIp;
+}
 
-  res.json(enderecoIp);
+app.get('/', async (req, res) => {
+  
+  res.json(enderecoIp(req));
 });
 
 app.get('/ip', async (req, res) => {
