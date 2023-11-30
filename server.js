@@ -1,12 +1,11 @@
 const express = require('express');
 const app = express();
 const ipinfo = require('ipinfo');
+const fs = require("fs");  // Adicionado a importação do módulo 'fs'
 const port = process.env.PORT || 3000;
 
 // Middleware
 const obterEnderecoIpMiddleware = require('./middlewares/obterEnderecoIpMiddleware');
-
-// Middleware de IP será aplicado apenas nas rotas relacionadas a informações de IP
 app.use(['/ip', '/ip/:ipAddress'], obterEnderecoIpMiddleware);
 
 // Função para verificar se a URL pertence ao Xvideos
@@ -45,6 +44,7 @@ app.get('/xvideos/:xvideosLink', async (req, res) => {
 
   XVDL.getInfo(targetLink).then((inf) => {
     console.log(targetLink);
+    const filePath = "caminho/do/arquivo";  // Defina o caminho adequado
     XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
     const jsonResponse = {
       statusCode: 200,
@@ -60,15 +60,4 @@ app.get('/ip', async (req, res) => {
   ipinfo(req.enderecoIp, (err, data) => {
     if (err) {
       console.error(err);
-      res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
-    } else {
-      delete data.readme;
-      res.json(data);
-    }
-  });
-});
-
-// Inicia o servidor
-app.listen(port, "0.0.0.0", () => {
-  console.log(`Servidor rodando em http://0.0.0.0:${port}`);
-});
+      res.status(50
