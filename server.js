@@ -10,4 +10,4 @@ app.get('/', async (req, res) => {
 
 app.listen(port, "0.0.0.0", function () {
     console.log(`Servidor rodando em http://0.0.0.0:${port}`);
-  });
+});
