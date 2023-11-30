@@ -3,18 +3,9 @@ const ipinfo = require('ipinfo');
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
-  const enderecoIp = req.ip; // Pode precisar usar req.clientIp se estiver usando o middleware request-ip
-
-  ipinfo(enderecoIp, (err, informacoesIp) => {
-    if (err) {
-      console.error(err);
-      res.status(500).send('Erro ao obter informações do IP');
-    } else {
-      res.json(informacoesIp);
-      //res.status(500).send('Erro ao obter informações do IP');
-    }
-  });
+app.get('/', async (req, res) => {
+  const enderecoIp = req.headers['x-real-ip'] || req.ip;
+  res.json(enderecoIp);
 });
 
 app.listen(port, "0.0.0.0", function () {
