@@ -5,7 +5,9 @@ const port = process.env.PORT || 3000;
 
 // Middleware
 const obterEnderecoIpMiddleware = require('./middlewares/obterEnderecoIpMiddleware');
-app.use(obterEnderecoIpMiddleware);
+
+// Middleware de IP será aplicado apenas nas rotas relacionadas a informações de IP
+app.use(['/ip', '/ip/:ipAddress'], obterEnderecoIpMiddleware);
 
 // Função para verificar se a URL pertence ao Xvideos
 function checkXvideosUrl(url) {
