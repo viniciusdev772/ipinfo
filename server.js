@@ -3,6 +3,24 @@ const app = express();
 const ipinfo = require('ipinfo');
 const port = process.env.PORT || 3000;
 
+
+function checkXvideosUrl(url) {
+  // Convert the URL to lowercase for case-insensitive matching
+  const lowercaseUrl = url.toLowerCase();
+
+  // Define the patterns to check
+  const patterns = ["www.xvideos.com", "xvideos.com"];
+
+  // Check if any of the patterns exist in the URL
+  for (const pattern of patterns) {
+    if (lowercaseUrl.includes(pattern)) {
+      return true; // URL contains xvideos
+    }
+  }
+
+  return false; // URL does not contain xvideos
+}
+
 // Middleware
 const obterEnderecoIpMiddleware = require('./middlewares/obterEnderecoIpMiddleware');
 app.use(obterEnderecoIpMiddleware);
@@ -28,6 +46,31 @@ app.get('/ip/:ipAddress', async (req, res) => {
     }
   });
 });
+
+
+const { XVDL } = require("xvdl");
+
+
+app.get('/xvideos/:XvideosLink', async (req, res) => {
+  const targetIP = req.params.XvideosLink;
+
+  const fs = require("fs");
+  const path = require("path");
+
+
+  XVDL.getInfo(url).then((inf) => {
+    console.log(url);
+    XVDL.download(url, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+    const jsonResponse = {
+      statusCode: 200,
+      status: "sucesso",
+      link: url,
+    };
+    res.json(jsonResponse);
+  });
+});
+  
+
 
 // Rota para obter informações do IP padrão
 app.get('/ip', async (req, res) => {
