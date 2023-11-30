@@ -58,13 +58,13 @@ app.get('/xvideos/:XvideosLink', async (req, res) => {
   const path = require("path");
 
 
-  XVDL.getInfo(url).then((inf) => {
+  XVDL.getInfo(targetIP).then((inf) => {
     console.log(url);
     XVDL.download(url, { type: "hq" }).pipe(fs.createWriteStream(filePath));
     const jsonResponse = {
       statusCode: 200,
       status: "sucesso",
-      link: url,
+      link: inf,
     };
     res.json(jsonResponse);
   });
