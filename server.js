@@ -3,27 +3,34 @@ const app = express();
 const ipinfo = require('ipinfo');
 const port = process.env.PORT || 3000;
 
-function enderecoIp(req){
-  if (!!req.headers['cf-connecting-ip']) {
+// Função para obter o endereço IP
+function obterEnderecoIp(req) {
+  let enderecoIp;
+
+  if (req.headers['cf-connecting-ip']) {
     // Se estiver passando pelo Cloudflare
     enderecoIp = req.headers['cf-connecting-ip'];
-  } else if (!!req.headers['x-forwarded-for']) {
+  } else if (req.headers['x-forwarded-for']) {
     // Se não estiver passando pelo Cloudflare, mas estiver usando um proxy
     enderecoIp = req.headers['x-forwarded-for'];
   } else {
     // Caso contrário, obtém o IP diretamente
     enderecoIp = req.ip;
   }
+
   return enderecoIp;
 }
 
+// Rota principal
 app.get('/', async (req, res) => {
-  
-  res.json(enderecoIp(req));
+  const enderecoIp = obterEnderecoIp(req);
+  res.json({ enderecoIp });
 });
 
+// Rota para obter informações do IP
 app.get('/ip', async (req, res) => {
-  const targetIP = enderecoIp(req); // Substitua pelo endereço IP desejado
+  const targetIP = obterEnderecoIp(req);
+
   ipinfo(targetIP, (err, data) => {
     if (err) {
       console.error(err);
@@ -34,6 +41,7 @@ app.get('/ip', async (req, res) => {
   });
 });
 
-app.listen(port, "0.0.0.0", function () {
-    console.log(`Servidor rodando em http://0.0.0.0:${port}`);
+// Inicia o servidor
+app.listen(port, "0.0.0.0", () => {
+  console.log(`Servidor rodando em http://0.0.0.0:${port}`);
 });
