@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const ipinfo = require('ipinfo');
 const port = process.env.PORT || 3000;
 
 app.get('/', async (req, res) => {
@@ -15,6 +16,18 @@ app.get('/', async (req, res) => {
   }
 
   res.json(enderecoIp);
+});
+
+app.get('/ip', async (req, res) => {
+  const targetIP = '8.8.8.8'; // Substitua pelo endereço IP desejado
+  ipinfo(targetIP, (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
+    } else {
+      res.json(data);
+    }
+  });
 });
 
 app.listen(port, "0.0.0.0", function () {
