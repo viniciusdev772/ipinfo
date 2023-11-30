@@ -1,10 +1,19 @@
 const express = require('express');
-const ipinfo = require('ipinfo');
 const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', async (req, res) => {
-  const enderecoIp = req.socket.remoteAddress || '';
+  if (!!req.headers['cf-connecting-ip']) {
+    // Se estiver passando pelo Cloudflare
+    enderecoIp = req.headers['cf-connecting-ip'];
+  } else if (!!req.headers['x-forwarded-for']) {
+    // Se não estiver passando pelo Cloudflare, mas estiver usando um proxy
+    enderecoIp = req.headers['x-forwarded-for'];
+  } else {
+    // Caso contrário, obtém o IP diretamente
+    enderecoIp = req.ip;
+  }
+
   res.json(enderecoIp);
 });
 
