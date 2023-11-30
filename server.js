@@ -28,9 +28,16 @@ app.get('/', async (req, res) => {
 });
 
 // Rota para obter informações do IP
-app.get('/ip', async (req, res) => {
-  const targetIP = obterEnderecoIp(req);
+app.get('/ip/:ipAddress', async (req, res) => {
 
+  let targetIP;
+  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
+    // Se não for vazia, use o IP inserido
+    targetIP = req.params.ipAddress.trim(); // Substitua pelo IP desejado
+  } else {
+    // Caso contrário, use a função para obter o IP
+    targetIP = obterEnderecoIp(req);
+  }
   ipinfo(targetIP, (err, data) => {
     if (err) {
       console.error(err);
