@@ -4,7 +4,7 @@ const app = express();
 const port = process.env.PORT || 3000;
 
 app.get('/', async (req, res) => {
-  const enderecoIp = req.headers['x-real-ip'] || req.ip;
+  const enderecoIp = req.socket.remoteAddress || '';
   res.json(enderecoIp);
 });
 
