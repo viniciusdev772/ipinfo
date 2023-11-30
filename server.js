@@ -23,7 +23,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/ip', async (req, res) => {
-  const targetIP = '8.8.8.8'; // Substitua pelo endereço IP desejado
+  const targetIP = enderecoIp(req); // Substitua pelo endereço IP desejado
   ipinfo(targetIP, (err, data) => {
     if (err) {
       console.error(err);
