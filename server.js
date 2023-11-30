@@ -29,8 +29,9 @@ app.get('/', async (req, res) => {
 
 // Rota para obter informações do IP
 app.get('/ip/:ipAddress', async (req, res) => {
-
   let targetIP;
+
+  // Verificar se req.params.ipAddress não é vazia
   if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
     // Se não for vazia, use o IP inserido
     targetIP = req.params.ipAddress.trim(); // Substitua pelo IP desejado
@@ -38,11 +39,30 @@ app.get('/ip/:ipAddress', async (req, res) => {
     // Caso contrário, use a função para obter o IP
     targetIP = obterEnderecoIp(req);
   }
+
   ipinfo(targetIP, (err, data) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
     } else {
+      // Remover a propriedade readme do objeto de resposta
+      delete data.readme;
+      res.json(data);
+    }
+  });
+});
+
+// Rota para obter informações do IP padrão
+app.get('/ip', async (req, res) => {
+  // Chamar a função para obter o IP padrão
+  const targetIP = obterEnderecoIp(req);
+
+  ipinfo(targetIP, (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
+    } else {
+      // Remover a propriedade readme do objeto de resposta
       delete data.readme;
       res.json(data);
     }
