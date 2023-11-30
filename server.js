@@ -36,6 +36,7 @@ app.get('/ip', async (req, res) => {
       console.error(err);
       res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
     } else {
+      delete data.readme;
       res.json(data);
     }
   });
