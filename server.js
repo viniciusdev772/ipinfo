@@ -38,7 +38,9 @@ app.get('/xvideos',  (req, res) => {
     const jsonResponse = {
       statusCode: 200,
       status: "sucesso",
-      link: inf,
+      thumb : inf.thumbnail,
+      titulo : inf.title,
+      link: inf.streams.hq,
     };
     res.json(jsonResponse);
   });
