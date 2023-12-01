@@ -28,7 +28,7 @@ app.get('/', async (req, res) => {
 });
 
 
-app.get('/xvideos/:ipAddress',  (req, res) => {
+app.get('/xvideos/:ipAddress', async (req, res) => {
   const { XVDL } = require("./xvdl/index");
   if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
     const jsonResponse = {
