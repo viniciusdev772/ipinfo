@@ -28,22 +28,28 @@ app.get('/', async (req, res) => {
 });
 
 
-app.get('/xvideos',  (req, res) => {
+app.get('/xvideos/:ipAddress',  (req, res) => {
   const { XVDL } = require("./xvdl/index");
-  const targetLink = req.query.url;
-
-  XVDL.getInfo(targetLink).then((inf) => {
-    console.log(targetLink);
-    //XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
     const jsonResponse = {
-      statusCode: 200,
-      status: "sucesso",
-      thumb : inf.thumbnail,
-      titulo : inf.title,
-      link: inf.streams.hq,
+      statusCode: 401,
+      status: "Erro, verifique seu link",
     };
-    res.json(jsonResponse);
-  });
+    res.status(401).json(jsonResponse);
+  }else{
+    XVDL.getInfo(targetLink).then((inf) => {
+      console.log(targetLink);
+      //XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+      const jsonResponse = {
+        statusCode: 200,
+        status: "sucesso",
+        thumb : inf.thumbnail,
+        titulo : inf.title,
+        link: inf.streams.hq,
+      };
+      res.json(jsonResponse);
+    });
+  }
 });
 
 // Rota para obter informações do IP
