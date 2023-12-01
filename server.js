@@ -28,36 +28,56 @@ app.get('/', async (req, res) => {
 });
 
 
+function checkXvideosUrl(url) {
+  // Convert the URL to lowercase for case-insensitive matching
+  const lowercaseUrl = url.toLowerCase();
+
+  // Define the patterns to check
+  const patterns = ["www.xvideos.com", "xvideos.com"];
+
+  // Check if any of the patterns exist in the URL
+  for (const pattern of patterns) {
+    if (lowercaseUrl.includes(pattern)) {
+      return true; // URL contains xvideos
+    }
+  }
+
+  return false; // URL does not contain xvideos
+}
+
+
 app.get('/xvideos',  (req, res) => {
   const { XVDL } = require("./xvdl/index");
   const targetLink = req.query.url;
 
-
   if (targetLink && targetLink.trim() !== '') {
-    // Se não for vazia, use o IP inserido
-    XVDL.getInfo(targetLink).then((inf) => {
-      console.log(targetLink);
-      //XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+    
+
+    if(checkXvideosUrl(targetLink)){
+      XVDL.getInfo(targetLink).then((inf) => {
+        const jsonResponse = {
+          statusCode: 200,
+          status: "sucesso",
+          thumb : inf.thumbnail,
+          titulo : inf.title,
+          link: inf.streams.hq,
+        };
+        res.json(jsonResponse);
+      });
+    }else{
       const jsonResponse = {
-        statusCode: 200,
-        status: "sucesso",
-        thumb : inf.thumbnail,
-        titulo : inf.title,
-        link: inf.streams.hq,
+        statusCode: 401,
+        status: "Link não Autorizado, Verifique seu Link do Xvideos",
       };
-      res.json(jsonResponse);
-    });
+      res.status(401).json(jsonResponse);
+    }
   } else {
-    // Caso contrário, use a função para obter o IP
     const jsonResponse = {
       statusCode: 401,
       status: "Unauthorized, Check your link",
     };
     res.status(401).json(jsonResponse);
-   
   }
-
- 
 });
 
 // Rota para obter informações do IP
