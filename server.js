@@ -29,7 +29,7 @@ app.get('/', async (req, res) => {
 
 
 app.get('/xvideos',  (req, res) => {
-  const { XVDL } = require('xvdl');
+  const { XVDL } = require("./xvdl/index");
   const targetLink = req.query.url;
 
   XVDL.getInfo(targetLink).then((inf) => {
