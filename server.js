@@ -1,46 +1,36 @@
 const express = require('express');
 const app = express();
 const ipinfo = require('ipinfo');
-const fs = require("fs");  // Adicionado a importação do módulo 'fs'
 const port = process.env.PORT || 3000;
 
-// Middleware
-const obterEnderecoIpMiddleware = require('./middlewares/obterEnderecoIpMiddleware');
-app.use(['/ip', '/ip/:ipAddress'], obterEnderecoIpMiddleware);
+// Função para obter o endereço IP
+function obterEnderecoIp(req) {
+  let enderecoIp;
 
-// Função para verificar se a URL pertence ao Xvideos
-function checkXvideosUrl(url) {
-  const lowercaseUrl = url.toLowerCase();
-  const patterns = ["www.xvideos.com", "xvideos.com"];
+  if (req.headers['cf-connecting-ip']) {
+    // Se estiver passando pelo Cloudflare
+    enderecoIp = req.headers['cf-connecting-ip'];
+  } else if (req.headers['x-forwarded-for']) {
+    // Se não estiver passando pelo Cloudflare, mas estiver usando um proxy
+    enderecoIp = req.headers['x-forwarded-for'];
+  } else {
+    // Caso contrário, obtém o IP diretamente
+    enderecoIp = req.ip;
+  }
 
-  return patterns.some(pattern => lowercaseUrl.includes(pattern));
+  return enderecoIp;
 }
 
 // Rota principal
 app.get('/', async (req, res) => {
-  res.json({ enderecoIp: req.enderecoIp });
+  const enderecoIp = obterEnderecoIp(req);
+  res.json({ enderecoIp });
 });
 
-// Rota para obter informações do IP
-app.get('/ip/:ipAddress', async (req, res) => {
-  const targetIP = req.params.ipAddress || req.enderecoIp;
 
-  ipinfo(targetIP, (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
-    } else {
-      delete data.readme;
-      res.json(data);
-    }
-  });
-});
-
-const { XVDL } = require("xvdl");
-
-// Rota para obter informações do Xvideos
 app.get('/xvideos/:xvideosLink', async (req, res) => {
   const targetLink = req.params.xvideosLink;
+  const { XVDL } = require('xvdl');
 
   try {
     const inf = await XVDL.getInfo(targetLink);
@@ -67,14 +57,42 @@ app.get('/xvideos/:xvideosLink', async (req, res) => {
 });
 
 
+// Rota para obter informações do IP
+app.get('/ip/:ipAddress', async (req, res) => {
+  let targetIP;
+
+  // Verificar se req.params.ipAddress não é vazia
+  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
+    // Se não for vazia, use o IP inserido
+    targetIP = req.params.ipAddress.trim(); // Substitua pelo IP desejado
+  } else {
+    // Caso contrário, use a função para obter o IP
+    targetIP = obterEnderecoIp(req);
+  }
+
+  ipinfo(targetIP, (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
+    } else {
+      // Remover a propriedade readme do objeto de resposta
+      delete data.readme;
+      res.json(data);
+    }
+  });
+});
 
 // Rota para obter informações do IP padrão
 app.get('/ip', async (req, res) => {
-  ipinfo(req.enderecoIp, (err, data) => {
+  // Chamar a função para obter o IP padrão
+  const targetIP = obterEnderecoIp(req);
+
+  ipinfo(targetIP, (err, data) => {
     if (err) {
       console.error(err);
       res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
     } else {
+      // Remover a propriedade readme do objeto de resposta
       delete data.readme;
       res.json(data);
     }
