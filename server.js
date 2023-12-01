@@ -28,29 +28,40 @@ app.get('/', async (req, res) => {
 });
 
 
-app.get('/xvideos/:ipAddress', async (req, res) => {
-  const { XVDL } = require("./xvdl/index");
-  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
+app.get('/xvideos/:link', async (req, res) => {
+  // Obtém o link da solicitação
+  const targetLink = req.params.link;
+
+  // Verifica se o link foi fornecido
+  if (!targetLink || targetLink.trim() === '') {
     const jsonResponse = {
       statusCode: 401,
-      status: "Erro, verifique seu link",
+      status: 'Erro, verifique seu link',
     };
     res.status(401).json(jsonResponse);
-  }else{
+  } else {
+    // Obtém informações usando o módulo XVDL
     XVDL.getInfo(targetLink).then((inf) => {
       console.log(targetLink);
-      //XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+
+      // Pode descomentar a linha abaixo para baixar o vídeo (requer fs)
+      // XVDL.download(targetLink, { type: 'hq' }).pipe(fs.createWriteStream(filePath));
+
+      // Cria a resposta JSON com informações relevantes
       const jsonResponse = {
         statusCode: 200,
-        status: "sucesso",
-        thumb : inf.thumbnail,
-        titulo : inf.title,
+        status: 'sucesso',
+        thumb: inf.thumbnail,
+        titulo: inf.title,
         link: inf.streams.hq,
       };
+
+      // Envia a resposta JSON
       res.json(jsonResponse);
     });
   }
 });
+
 
 // Rota para obter informações do IP
 app.get('/ip/:ipAddress', async (req, res) => {
