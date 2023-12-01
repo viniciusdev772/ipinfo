@@ -28,40 +28,37 @@ app.get('/', async (req, res) => {
 });
 
 
-app.get('/xvideos/:link', async (req, res) => {
-  // Obtém o link da solicitação
-  const targetLink = req.params.link;
+app.get('/xvideos',  (req, res) => {
+  const { XVDL } = require("./xvdl/index");
+  const targetLink = req.query.url;
 
-  // Verifica se o link foi fornecido
-  if (!targetLink || targetLink.trim() === '') {
-    const jsonResponse = {
-      statusCode: 401,
-      status: 'Erro, verifique seu link',
-    };
-    res.status(401).json(jsonResponse);
-  } else {
-    // Obtém informações usando o módulo XVDL
+
+  if (targetLink && targetLink.trim() !== '') {
+    // Se não for vazia, use o IP inserido
     XVDL.getInfo(targetLink).then((inf) => {
       console.log(targetLink);
-
-      // Pode descomentar a linha abaixo para baixar o vídeo (requer fs)
-      // XVDL.download(targetLink, { type: 'hq' }).pipe(fs.createWriteStream(filePath));
-
-      // Cria a resposta JSON com informações relevantes
+      //XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
       const jsonResponse = {
         statusCode: 200,
-        status: 'sucesso',
-        thumb: inf.thumbnail,
-        titulo: inf.title,
+        status: "sucesso",
+        thumb : inf.thumbnail,
+        titulo : inf.title,
         link: inf.streams.hq,
       };
-
-      // Envia a resposta JSON
       res.json(jsonResponse);
     });
+  } else {
+    // Caso contrário, use a função para obter o IP
+    const jsonResponse = {
+      statusCode: 401,
+      status: "Unauthorized, Check your link",
+    };
+    res.status(401).json(jsonResponse);
+   
   }
-});
 
+ 
+});
 
 // Rota para obter informações do IP
 app.get('/ip/:ipAddress', async (req, res) => {
