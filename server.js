@@ -29,11 +29,12 @@ app.get('/', async (req, res) => {
 
 
 app.get('/xvideos',  (req, res) => {
+  const { XVDL } = require('xvdl');
   const targetLink = req.query.url;
 
   XVDL.getInfo(targetLink).then((inf) => {
     console.log(targetLink);
-    XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+    //XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
     const jsonResponse = {
       statusCode: 200,
       status: "sucesso",
