@@ -28,34 +28,20 @@ app.get('/', async (req, res) => {
 });
 
 
-app.get('/xvideos/:xvideosLink', async (req, res) => {
-  const targetLink = req.params.xvideosLink;
-  const { XVDL } = require('xvdl');
+app.get('/xvideos',  (req, res) => {
+  const targetLink = req.query.url;
 
-  try {
-    const inf = await XVDL.getInfo(targetLink);
-
-    const downloadLink = await XVDL.download(targetLink, { type: "hq" });
-
-    // Em vez de usar fs.createWriteStream, redirecione o conteúdo diretamente para a resposta
-    downloadLink.pipe(res);
-
-    // Quando o download estiver completo, envie uma resposta JSON com o link de download
-    res.on('finish', () => {
-      const jsonResponse = {
-        statusCode: 200,
-        status: "sucesso",
-        link: inf,
-        downloadLink: `caminho/do/arquivo/${targetLink}`,  // Atualize o caminho conforme necessário
-      };
-      res.json(jsonResponse);
-    });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao obter informações do link Xvideos.' });
-  }
+  XVDL.getInfo(targetLink).then((inf) => {
+    console.log(targetLink);
+    XVDL.download(targetLink, { type: "hq" }).pipe(fs.createWriteStream(filePath));
+    const jsonResponse = {
+      statusCode: 200,
+      status: "sucesso",
+      link: inf,
+    };
+    res.json(jsonResponse);
+  });
 });
-
 
 // Rota para obter informações do IP
 app.get('/ip/:ipAddress', async (req, res) => {
