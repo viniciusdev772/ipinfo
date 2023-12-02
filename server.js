@@ -1,11 +1,11 @@
 const express = require('express');
 const http = require('http');
-const WebSocket = require('ws');
+const socketIO = require('socket.io');
 const ipinfo = require('ipinfo');
 
 const app = express();
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const io = socketIO(server);
 
 const port = process.env.PORT || 3000;
 
@@ -107,27 +107,27 @@ app.get('/ip', async (req, res) => {
   });
 });
 
-// Evento de conexão WebSocket
-wss.on('connection', (ws) => {
-  console.log('Conexão WebSocket estabelecida.');
+// Evento de conexão Socket.io
+io.on('connection', (socket) => {
+  console.log('Conexão Socket.io estabelecida.');
 
-  // Evento de mensagem recebida do cliente WebSocket
-  ws.on('message', (message) => {
-    console.log(`Mensagem WebSocket recebida: ${message}`);
+  // Evento de mensagem recebida do cliente Socket.io
+  socket.on('message', (message) => {
+    console.log(`Mensagem Socket.io recebida: ${message}`);
 
-    // Enviar uma resposta de volta para o cliente WebSocket
-    ws.send(`Resposta do servidor: ${message}`);
+    // Enviar uma resposta de volta para o cliente Socket.io
+    socket.send(`Resposta do servidor: ${message}`);
   });
 
-  // Evento de fechamento da conexão WebSocket
-  ws.on('close', () => {
-    console.log('Conexão WebSocket fechada.');
+  // Evento de fechamento da conexão Socket.io
+  socket.on('disconnect', () => {
+    console.log('Conexão Socket.io fechada.');
   });
 });
 
-// A rota /websocket lida apenas com conexões WebSocket
+// A rota /websocket lida apenas com conexões Socket.io
 app.get('/websocket', (req, res) => {
-  res.status(200).send('WebSocket endpoint');
+  res.status(200).send('Socket.io endpoint');
 });
 
 server.listen(port, "0.0.0.0", () => {
