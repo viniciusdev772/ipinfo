@@ -109,19 +109,19 @@ app.get('/ip', async (req, res) => {
 
 // Evento de conexão Socket.io
 io.on('connection', (socket) => {
-  console.log('Conexão Socket.io estabelecida.');
+  console.log('Usuário conectado');
 
-  // Evento de mensagem recebida do cliente Socket.io
-  socket.on('message', (message) => {
-    console.log(`Mensagem Socket.io recebida: ${message}`);
+  // Evento de mensagem
+  socket.on('chat message', (msg) => {
+    console.log(`Mensagem recebida: ${msg}`);
 
-    // Enviar uma resposta de volta para o cliente Socket.io
-    socket.send(`Resposta do servidor: ${message}`);
+    // Enviando a mensagem para todos os clientes conectados
+    io.emit('chat message', msg);
   });
 
-  // Evento de fechamento da conexão Socket.io
+  // Desconexão de socket
   socket.on('disconnect', () => {
-    console.log('Conexão Socket.io fechada.');
+    console.log('Usuário desconectado');
   });
 });
 
