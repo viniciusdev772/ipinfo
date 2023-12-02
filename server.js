@@ -32,22 +32,17 @@ function checkXvideosUrl(url) {
   const lowercaseUrl = url.toLowerCase();
   const patterns = ["www.xvideos.com", "xvideos.com"];
 
-  for (const pattern of patterns) {
-    if (lowercaseUrl.includes(pattern)) {
-      return true;
-    }
-  }
-
-  return false;
+  return patterns.some(pattern => lowercaseUrl.includes(pattern));
 }
 
-app.get('/xvideos', (req, res) => {
+app.get('/xvideos', async (req, res) => {
   const { XVDL } = require("./xvdl/index");
   const targetLink = req.query.url;
 
   if (targetLink && targetLink.trim() !== '') {
     if (checkXvideosUrl(targetLink)) {
-      XVDL.getInfo(targetLink).then((inf) => {
+      try {
+        const inf = await XVDL.getInfo(targetLink);
         const jsonResponse = {
           statusCode: 200,
           status: "sucesso",
@@ -56,55 +51,53 @@ app.get('/xvideos', (req, res) => {
           link: inf.streams.hq,
         };
         res.json(jsonResponse);
-      });
+      } catch (error) {
+        const jsonResponse = {
+          statusCode: 500,
+          status: "Erro ao obter informações do Xvideos",
+        };
+        res.status(500).json(jsonResponse);
+      }
     } else {
       const jsonResponse = {
         statusCode: 401,
-        status: "Link não Autorizado, Verifique seu Link do Xvideos",
+        status: "Link não autorizado, verifique seu link do Xvideos",
       };
       res.status(401).json(jsonResponse);
     }
   } else {
     const jsonResponse = {
       statusCode: 401,
-      status: "Unauthorized, Check your link",
+      status: "Unauthorized, check your link",
     };
     res.status(401).json(jsonResponse);
   }
 });
 
 app.get('/ip/:ipAddress', async (req, res) => {
-  let targetIP;
+  const targetIP = req.params.ipAddress ? req.params.ipAddress.trim() : obterEnderecoIp(req);
 
-  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
-    targetIP = req.params.ipAddress.trim();
-  } else {
-    targetIP = obterEnderecoIp(req);
+  try {
+    const data = await ipinfo(targetIP);
+    delete data.readme;
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
   }
-
-  ipinfo(targetIP, (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
-    } else {
-      delete data.readme;
-      res.json(data);
-    }
-  });
 });
 
 app.get('/ip', async (req, res) => {
   const targetIP = obterEnderecoIp(req);
 
-  ipinfo(targetIP, (err, data) => {
-    if (err) {
-      console.error(err);
-      res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
-    } else {
-      delete data.readme;
-      res.json(data);
-    }
-  });
+  try {
+    const data = await ipinfo(targetIP);
+    delete data.readme;
+    res.json(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
+  }
 });
 
 // Evento de conexão Socket.io
