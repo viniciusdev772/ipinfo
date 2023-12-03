@@ -119,7 +119,7 @@ wss.on('connection', (ws) => {
   ws.on('message', (message) => {
     console.log(`Mensagem WebSocket recebida: ${message}`);
 
-    // Enviar a mensagem para todos os clientes conectados
+    // Enviar a mensagem para todos os clientes conectados, exceto o remetente
     connections.forEach((client) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
         client.send(`Resposta do servidor: ${message}`);
