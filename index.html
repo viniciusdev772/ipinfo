@@ -191,19 +191,8 @@
         var resultado = mensagem;
 
         if (socket && socket.readyState === WebSocket.OPEN) {
-          $.ajax({
-            url: "https://api64.ipify.org?format=json",
-            type: "GET",
-            success: function (ipData) {
-              console.log("Endereço IP do usuário:", ipData.ip);
-              resultado += "\n\nEndereço IP do remetente: " + ipData.ip;
-              $("#resposta").html("Você enviou: " + mensagem);
-              socket.send(mensagem);
-            },
-            error: function (error) {
-              console.error("Erro ao obter endereço IP:", error);
-            },
-          });
+          $("#resposta").html("Você enviou: " + mensagem);
+            socket.send(mensagem);
         } else {
           console.error("Erro: Conexão não está aberta.");
         }
