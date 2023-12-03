@@ -9,14 +9,15 @@
 <body>
     <h1>WebRTC Live Stream</h1>
     <video id="localVideo" autoplay muted playsinline></video>
-    <div id="remoteVideos"></div>
+    <video id="remoteVideo" autoplay playsinline></video>
 
     <script>
         const userId = Math.random().toString(36).substring(7);
         const socket = new WebSocket('wss://vdevapi.online');
 
         const localVideo = document.getElementById('localVideo');
-        const remoteVideosContainer = document.getElementById('remoteVideos');
+        const remoteVideo = document.getElementById('remoteVideo');
+        let peerConnection;
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             .then((stream) => {
@@ -40,7 +41,7 @@
             .catch((error) => console.error('Erro ao acessar a webcam:', error));
 
         function createPeerConnection(remoteUserId, stream) {
-            const peerConnection = new RTCPeerConnection();
+            peerConnection = new RTCPeerConnection();
 
             stream.getTracks().forEach((track) => {
                 peerConnection.addTrack(track, stream);
@@ -73,19 +74,12 @@
                 handleWebRTCMessage(data);
             };
 
-            const remoteVideo = document.createElement('video');
-            remoteVideo.autoplay = true;
-            remoteVideo.playsinline = true;
-            remoteVideosContainer.appendChild(remoteVideo);
-
             peerConnection.ontrack = (event) => {
                 remoteVideo.srcObject = event.streams[0];
             };
         }
 
         function handleWebRTCMessage(data) {
-            const peerConnection = new RTCPeerConnection();
-
             if (data.type === 'offer') {
                 peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
                     .then(() => peerConnection.createAnswer())

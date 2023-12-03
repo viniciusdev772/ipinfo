@@ -192,7 +192,6 @@ wss.on('connection', (socket) => {
         }
       });
     } else if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') {
-      // Encaminha a mensagem para o destinatário correto
       const destinationUser = connections.get(data.remoteUserId);
       if (destinationUser) {
         destinationUser.send(message);
