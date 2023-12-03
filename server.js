@@ -108,20 +108,30 @@ app.get('/ip', async (req, res) => {
 });
 
 // Evento de conexão WebSocket
+const connections = new Set();
+
 wss.on('connection', (ws) => {
   console.log('Conexão WebSocket estabelecida.');
 
-  // Evento de mensagem recebida do cliente WebSocket
+  // Adicionar a nova conexão ao conjunto
+  connections.add(ws);
+
   ws.on('message', (message) => {
     console.log(`Mensagem WebSocket recebida: ${message}`);
 
-    // Enviar uma resposta de volta para o cliente WebSocket
-    ws.send(`Resposta do servidor: ${message}`);
+    // Enviar a mensagem para todos os clientes conectados
+    connections.forEach((client) => {
+      if (client !== ws && client.readyState === WebSocket.OPEN) {
+        client.send(`Resposta do servidor: ${message}`);
+      }
+    });
   });
 
-  // Evento de fechamento da conexão WebSocket
   ws.on('close', () => {
     console.log('Conexão WebSocket fechada.');
+
+    // Remover a conexão do conjunto ao fechar
+    connections.delete(ws);
   });
 });
 
