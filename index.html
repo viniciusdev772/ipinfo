@@ -157,7 +157,12 @@
 
       function enviarMensagem() {
         var mensagem = $("#message").val();
-        data1 = JSON.parse(data1);
+        try {
+          data1 = JSON.parse(data1);
+        } catch (error) {
+          console.error("Erro ao decodificar JSON:", error);
+        }
+        
         var resultado = mensagem + '-' + data1;
 
         if (socket && socket.readyState === WebSocket.OPEN) {
