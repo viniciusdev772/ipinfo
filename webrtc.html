@@ -9,93 +9,100 @@
 <body>
     <h1>WebRTC Live Stream</h1>
     <video id="localVideo" autoplay muted playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
+    <div id="remoteVideos"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer"></script>
+    <script src="https://cdn.socket.io/4.1.3/socket.io.min.js"></script>
 
     <script>
         const userId = Math.random().toString(36).substring(7);
-        const socket = new WebSocket('wss://vdevapi.online');
+        const socket = io('wss://vdevapi.online');
 
         const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        let peerConnection;
+        const remoteVideosContainer = document.getElementById('remoteVideos');
+        const peers = {};
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             .then((stream) => {
                 localVideo.srcObject = stream;
-                socket.send(JSON.stringify({ type: 'new-user', userId: userId }));
 
-                socket.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
+                socket.emit('new-user', userId);
 
-                    if (data.type === 'existing-users') {
-                        data.users.forEach((existingUserId) => {
-                            createPeerConnection(existingUserId, stream);
-                        });
-                    } else if (data.type === 'new-user' && data.userId !== userId) {
-                        createPeerConnection(data.userId, stream);
-                    } else if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') {
-                        handleWebRTCMessage(data);
+                socket.on('new-user', (newUserId) => {
+                    console.log(`Novo usuário conectado - ID: ${newUserId}`);
+                    createPeerConnection(newUserId, stream);
+                });
+
+                socket.on('existing-users', (existingUsers) => {
+                    existingUsers.forEach((existingUserId) => {
+                        console.log(`Usuário existente conectado - ID: ${existingUserId}`);
+                        createPeerConnection(existingUserId, stream);
+                    });
+                });
+
+                socket.on('user-disconnected', (disconnectedUserId) => {
+                    console.log(`Usuário desconectado - ID: ${disconnectedUserId}`);
+                    const peer = peers[disconnectedUserId];
+                    if (peer) {
+                        peer.destroy();
+                        delete peers[disconnectedUserId];
+                        removeVideoElement(disconnectedUserId);
                     }
-                };
+                });
             })
             .catch((error) => console.error('Erro ao acessar a webcam:', error));
 
         function createPeerConnection(remoteUserId, stream) {
-            peerConnection = new RTCPeerConnection();
+            const peer = new SimplePeer({ initiator: true, trickle: false, stream });
 
-            stream.getTracks().forEach((track) => {
-                peerConnection.addTrack(track, stream);
+            peer.on('signal', (data) => {
+                socket.emit('offer', { offer: data, userId, remoteUserId });
             });
 
-            peerConnection.createOffer()
-                .then((offer) => peerConnection.setLocalDescription(offer))
-                .then(() => {
-                    socket.send(JSON.stringify({
-                        type: 'offer',
-                        offer: peerConnection.localDescription,
-                        userId: userId,
-                        remoteUserId: remoteUserId
-                    }));
-                });
+            peer.on('connect', () => {
+                console.log('Conexão estabelecida com sucesso');
+            });
 
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.send(JSON.stringify({
-                        type: 'ice-candidate',
-                        iceCandidate: event.candidate,
-                        userId: userId,
-                        remoteUserId: remoteUserId
-                    }));
+            peer.on('stream', (remoteStream) => {
+                console.log(`Recebendo stream de ${remoteUserId}`);
+                const remoteVideo = createVideoElement(remoteUserId);
+                remoteVideo.srcObject = remoteStream;
+            });
+
+            socket.on('offer', (data) => {
+                if (data.userId === remoteUserId) {
+                    peer.signal(data.offer);
                 }
-            };
+            });
 
-            socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                handleWebRTCMessage(data);
-            };
+            socket.on('answer', (data) => {
+                if (data.userId === remoteUserId) {
+                    peer.signal(data.answer);
+                }
+            });
 
-            peerConnection.ontrack = (event) => {
-                remoteVideo.srcObject = event.streams[0];
-            };
+            socket.on('ice-candidate', (data) => {
+                if (data.userId === remoteUserId) {
+                    peer.signal(data.iceCandidate);
+                }
+            });
+
+            peers[remoteUserId] = peer;
         }
 
-        function handleWebRTCMessage(data) {
-            if (data.type === 'offer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
-                    .then(() => peerConnection.createAnswer())
-                    .then((answer) => peerConnection.setLocalDescription(answer))
-                    .then(() => {
-                        socket.send(JSON.stringify({
-                            type: 'answer',
-                            answer: peerConnection.localDescription,
-                            userId: userId,
-                            remoteUserId: data.userId
-                        }));
-                    });
-            } else if (data.type === 'answer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-            } else if (data.type === 'ice-candidate') {
-                peerConnection.addIceCandidate(new RTCIceCandidate(data.iceCandidate));
+        function createVideoElement(remoteUserId) {
+            const remoteVideo = document.createElement('video');
+            remoteVideo.autoplay = true;
+            remoteVideo.playsinline = true;
+            remoteVideo.id = `video-${remoteUserId}`;
+            remoteVideosContainer.appendChild(remoteVideo);
+            return remoteVideo;
+        }
+
+        function removeVideoElement(remoteUserId) {
+            const remoteVideo = document.getElementById(`video-${remoteUserId}`);
+            if (remoteVideo) {
+                remoteVideo.remove();
             }
         }
     </script>
