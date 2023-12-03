@@ -172,40 +172,57 @@ const io = socketIo(server);
 // A rota /websocket lida apenas com conexões WebSocket
 
 
+const connections = new Map();
+
 io.on('connection', (socket) => {
   socket.on('new-user', (userId) => {
     console.log(`Usuário conectado - ID: ${userId}`);
+    connections.set(userId, socket);
 
     // Informa todos os clientes sobre o novo usuário
     io.emit('new-user', userId);
 
     // Envia a lista de usuários existentes para o novo usuário
-    const existingUsers = Object.keys(io.sockets.sockets).filter(id => id !== userId);
+    const existingUsers = Array.from(connections.keys()).filter(id => id !== userId);
     socket.emit('existing-users', existingUsers);
   });
 
   socket.on('offer', (data) => {
     // Encaminha a oferta para o destinatário
-    io.to(data.remoteUserId).emit('offer', { offer: data.offer, userId: data.userId });
+    const destinationUser = connections.get(data.remoteUserId);
+    if (destinationUser) {
+      destinationUser.emit('offer', { offer: data.offer, userId: data.userId });
+    }
   });
 
   socket.on('answer', (data) => {
     // Encaminha a resposta para o destinatário
-    io.to(data.remoteUserId).emit('answer', { answer: data.answer, userId: data.userId });
+    const destinationUser = connections.get(data.remoteUserId);
+    if (destinationUser) {
+      destinationUser.emit('answer', { answer: data.answer, userId: data.userId });
+    }
   });
 
   socket.on('ice-candidate', (data) => {
     // Encaminha o candidato ICE para o destinatário
-    io.to(data.remoteUserId).emit('ice-candidate', { iceCandidate: data.iceCandidate, userId: data.userId });
+    const destinationUser = connections.get(data.remoteUserId);
+    if (destinationUser) {
+      destinationUser.emit('ice-candidate', { iceCandidate: data.iceCandidate, userId: data.userId });
+    }
   });
 
   socket.on('disconnect', () => {
-    console.log(`Usuário desconectado - ID: ${socket.id}`);
+    const userId = Array.from(connections.entries()).find(([key, value]) => value === socket)?.[0];
+    if (userId) {
+      console.log(`Usuário desconectado - ID: ${userId}`);
+      connections.delete(userId);
 
-    // Informa todos os clientes sobre o usuário desconectado
-    io.emit('user-disconnected', socket.id);
+      // Informa todos os clientes sobre o usuário desconectado
+      io.emit('user-disconnected', userId);
+    }
   });
 });
+
 
 // Rota principal
 app.get('/websocket', (req, res) => {
