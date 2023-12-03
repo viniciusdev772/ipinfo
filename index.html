@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Formulário WebSocket</title>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <style>
       body {
         font-family: "Arial", sans-serif;
@@ -88,23 +89,21 @@
     <div id="resposta"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    
     <script>
       var socket;
       var data1;
 
       function exibirTermoDeAceitacao() {
         swal({
-          title: "Termo de Aceitação",
+          title: "Aviso a Privacidade",
           text: "Ao continuar, você concorda com a coleta e utilização do seu endereço IP para fins de verificação de funcionalidade nas regiões brasileiras, em conformidade com as leis de privacidade e proteção de dados do Brasil.",
           icon: "info",
           buttons: ["Cancelar", "Aceitar"],
         }).then((aceitou) => {
           if (aceitou) {
-            console.log("Usuário aceitou o termo. Continuando no site...");
             conectarWebSocket();
           } else {
-            console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
             window.history.back();
           }
         });
