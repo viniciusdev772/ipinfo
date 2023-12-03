@@ -146,7 +146,7 @@ wss.on('connection', (ws,req) => {
     console.log('Conexão WebSocket fechada.');
 
     // Remover a conexão do conjunto ao fechar
-    connections.delete(ws);
+    //connections.delete(ws);
   });
 });
 
