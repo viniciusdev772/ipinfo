@@ -180,14 +180,29 @@ wss.on('connection', (socket) => {
   });
 
   socket.on('message', (message) => {
-    // Broadcast da mensagem para todos os outros clientes
-    connections.forEach((connection, id) => {
-      if (id !== userId && connection.readyState === WebSocket.OPEN) {
-        connection.send(message);
+    const data = JSON.parse(message);
+
+    if (data.type === 'new-user') {
+      // Envia para o novo usuário a lista de usuários existentes
+      const existingUsers = Array.from(connections.keys()).filter(id => id !== userId);
+      socket.send(JSON.stringify({ type: 'existing-users', users: existingUsers }));
+
+      // Envia para os usuários existentes a informação sobre o novo usuário
+      connections.forEach((connection, id) => {
+        if (id !== userId) {
+          connection.send(JSON.stringify({ type: 'new-user', userId: userId }));
+        }
+      });
+    } else if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') {
+      // Encaminha a mensagem para o destinatário correto
+      const destinationUser = connections.get(data.remoteUserId);
+      if (destinationUser) {
+        destinationUser.send(message);
       }
-    });
+    }
   });
 });
+
 
 // A rota /websocket lida apenas com conexões WebSocket
 

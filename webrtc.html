@@ -26,8 +26,14 @@
                 socket.onmessage = (event) => {
                     const data = JSON.parse(event.data);
 
-                    if (data.type === 'new-user' && data.userId !== userId) {
+                    if (data.type === 'existing-users') {
+                        data.users.forEach((existingUserId) => {
+                            createPeerConnection(existingUserId, stream);
+                        });
+                    } else if (data.type === 'new-user' && data.userId !== userId) {
                         createPeerConnection(data.userId, stream);
+                    } else if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') {
+                        handleWebRTCMessage(data);
                     }
                 };
             })
@@ -64,26 +70,7 @@
 
             socket.onmessage = (event) => {
                 const data = JSON.parse(event.data);
-
-                if (data.userId === userId) return;
-
-                if (data.type === 'offer') {
-                    peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
-                        .then(() => peerConnection.createAnswer())
-                        .then((answer) => peerConnection.setLocalDescription(answer))
-                        .then(() => {
-                            socket.send(JSON.stringify({
-                                type: 'answer',
-                                answer: peerConnection.localDescription,
-                                userId: userId,
-                                remoteUserId: data.userId
-                            }));
-                        });
-                } else if (data.type === 'answer') {
-                    peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-                } else if (data.type === 'ice-candidate') {
-                    peerConnection.addIceCandidate(new RTCIceCandidate(data.iceCandidate));
-                }
+                handleWebRTCMessage(data);
             };
 
             const remoteVideo = document.createElement('video');
@@ -94,6 +81,28 @@
             peerConnection.ontrack = (event) => {
                 remoteVideo.srcObject = event.streams[0];
             };
+        }
+
+        function handleWebRTCMessage(data) {
+            const peerConnection = new RTCPeerConnection();
+
+            if (data.type === 'offer') {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
+                    .then(() => peerConnection.createAnswer())
+                    .then((answer) => peerConnection.setLocalDescription(answer))
+                    .then(() => {
+                        socket.send(JSON.stringify({
+                            type: 'answer',
+                            answer: peerConnection.localDescription,
+                            userId: userId,
+                            remoteUserId: data.userId
+                        }));
+                    });
+            } else if (data.type === 'answer') {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+            } else if (data.type === 'ice-candidate') {
+                peerConnection.addIceCandidate(new RTCIceCandidate(data.iceCandidate));
+            }
         }
     </script>
 </body>
