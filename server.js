@@ -110,9 +110,10 @@ app.get('/ip', async (req, res) => {
 // Evento de conexão WebSocket
 const connections = new Set();
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws,req) => {
   console.log('Conexão WebSocket estabelecida.');
-
+  const enderecoIp = obterEnderecoIp(req);
+  console.log(`Nova conexão WebSocket do IP: ${enderecoIp}`);
   // Adicionar a nova conexão ao conjunto
   connections.add(ws);
 
@@ -122,7 +123,7 @@ wss.on('connection', (ws) => {
     // Enviar a mensagem para todos os clientes conectados, exceto o remetente
     connections.forEach((client) => {
       if (client !== ws && client.readyState === WebSocket.OPEN) {
-        client.send(`Resposta do servidor: ${message}`);
+        client.send(`Nova Mensagem do endereço IP: ${enderecoIp} : ${message}`);
       }
     });
   });
