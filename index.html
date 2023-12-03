@@ -93,32 +93,24 @@
     var socket;
 
     function conectarWebSocket() {
-      // Verificar se a conexão já existe
       if (socket && socket.readyState === WebSocket.OPEN) {
         return;
       }
 
-      // Conectar ao WebSocket
       socket = new WebSocket('wss://vdevapi.online');
 
-      // Atualizar o status quando a conexão estiver aberta
       socket.addEventListener('open', function (event) {
         $('#statusBadge').text('Conectado').removeClass('desconectado').addClass('conectado');
       });
 
-      // Escutar mensagens do servidor
       socket.addEventListener('message', function (event) {
-        // Exibir a resposta do servidor na div
         $('#resposta').html('Resposta do servidor: ' + event.data);
-        // Você pode adicionar mais lógica aqui para lidar com a resposta do servidor.
       });
 
-      // Lidar com erros
       socket.addEventListener('error', function (event) {
         console.error('Erro na conexão:', event);
       });
 
-      // Lidar com o fechamento da conexão
       socket.addEventListener('close', function (event) {
         $('#statusBadge').text('Desconectado').removeClass('conectado').addClass('desconectado');
         reconectarWebSocket();
@@ -126,13 +118,11 @@
     }
 
     function reconectarWebSocket() {
-      // Tentar reconectar após 5 segundos
       setTimeout(function() {
         conectarWebSocket();
       }, 5000);
     }
 
-    // Iniciar a conexão WebSocket quando a página carregar
     $(document).ready(function () {
       conectarWebSocket();
     });
@@ -140,8 +130,8 @@
     function enviarMensagem() {
       var mensagem = $('#message').val();
       
-      // Enviar a mensagem quando a conexão estiver aberta
       if (socket && socket.readyState === WebSocket.OPEN) {
+        $('#resposta').html('Você enviou: ' + mensagem);
         socket.send(mensagem);
       } else {
         console.error('Erro: Conexão não está aberta.');
