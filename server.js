@@ -133,7 +133,7 @@ app.get('/ip', async (req, res) => {
 
 // Evento de conexão WebSocket
 
-/*
+
 const connections = new Set();
 
 wss.on('connection', (ws,req) => {
@@ -161,7 +161,7 @@ wss.on('connection', (ws,req) => {
     //connections.delete(ws);
   });
 });
-*/
+
 
 
 
@@ -171,33 +171,7 @@ wss.on('connection', (ws,req) => {
 Video Broadcast
 */
 
-const socketIo = require('socket.io');
-const io = socketIo(server);
-// A rota /websocket lida apenas com conexões WebSocket
 
-
-io.on('connection', (socket) => {
-  console.log(`Usuário conectado - ID: ${socket.id}`);
-
-  // Quando um novo usuário se conecta, informa todos os usuários existentes sobre o novo usuário
-  io.emit('new-user', socket.id);
-
-  // Escuta o sinal enviado pelo novo usuário e encaminha para o destinatário
-  socket.on('signal', (data) => {
-      console.log(`Sinal recebido de ${socket.id}:`, data);
-      io.to(data.target).emit('signal', {
-          target: data.target,
-          sender: socket.id,
-          signal: data.signal,
-      });
-  });
-
-  // Escuta o evento de desconexão e informa a todos os usuários
-  socket.on('disconnect', () => {
-      console.log(`Usuário desconectado - ID: ${socket.id}`);
-      io.emit('user-disconnected', socket.id);
-  });
-});
 
 
 // Rota principal

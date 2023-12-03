@@ -1,104 +1,267 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Live Stream</title>
-</head>
-<body>
-    <h1>WebRTC Live Stream</h1>
-    <video id="localVideo" autoplay muted playsinline></video>
-    <div id="remoteVideos"></div>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebSocket</title>
+    
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
+      }
 
+      form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      #resposta {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #eee;
+        border-radius: 4px;
+      }
+
+      #statusBadge {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 4px;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      .conectado {
+        background-color: #4caf50;
+      }
+
+      .desconectado {
+        background-color: #f44336;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="myForm">
+      <label for="message">Mensagem:</label>
+      <input type="text" id="message" name="message" required />
+
+      <button type="button" onclick="enviarMensagem()">Enviar Mensagem</button>
+    </form>
+
+    <div id="statusBadge" class="desconectado">Desconectado</div>
+
+    <div id="resposta"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.1.3/dist/sweetalert2.all.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    
     <script>
-        const userId = Math.random().toString(36).substring(7);
-        const socket = new WebSocket('wss://vdevapi.online');
+      var socket;
+      var data1;
+      var versao = 17;
 
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideosContainer = document.getElementById('remoteVideos');
+      function exibirTermoDeAceitacao() {
+        Swal.fire({
+          title: "Aviso de coleta de IP",
+          text: "Ao continuar, você concorda com a coleta e utilização do seu endereço IP para fins de verificação de funcionalidade nas regiões brasileiras, em conformidade com as leis de privacidade e proteção de dados do Brasil.",
+          icon: "info",
+          showCancelButton: true,
+          confirmButtonText: "Aceitar",
+          cancelButtonText: "Cancelar",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            console.log("Usuário aceitou o termo. Continuando no site...");
+            conectarWebSocket(); // Conectar ao WebSocket após aceitar o termo
+          } else {
+            console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
+            window.history.back();
+          }
+        });
+      }
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-            .then((stream) => {
-                localVideo.srcObject = stream;
-                socket.send(JSON.stringify({ type: 'new-user', userId: userId }));
+      const url = "https://vdevapi.online/ip";
+      const url2 = "https://vdevapi.online/websocketversao";
 
-                socket.onmessage = (event) => {
-                    const data = JSON.parse(event.data);
+      $("#statusBadge")
+        .text("Obtendo Seu IP....")
+        .addClass("desconectado");
 
-                    if (data.type === 'existing-users') {
-                        data.users.forEach((existingUserId) => {
-                            createPeerConnection(existingUserId, stream);
-                        });
-                    } else if (data.type === 'new-user' && data.userId !== userId) {
-                        createPeerConnection(data.userId, stream);
-                    } else if (data.type === 'offer' || data.type === 'answer' || data.type === 'ice-candidate') {
-                        handleWebRTCMessage(data);
-                    }
-                };
-            })
-            .catch((error) => console.error('Erro ao acessar a webcam:', error));
+      $.ajax({
+        url: url,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          data1 = data;
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
+      });
 
-        function createPeerConnection(remoteUserId, stream) {
-            const peerConnection = new RTCPeerConnection();
+      $.ajax({
+        url: url2,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          if(data == versao){
 
-            stream.getTracks().forEach((track) => {
-                peerConnection.addTrack(track, stream);
-            });
+          }else{
+              Swal.fire({
+              icon: 'warning',
+              title: 'Versão Desatualizada',
+              text: `Você está usando uma versão desatualizada. Por favor Recarregue a página,.`,
+              confirmButtonText: 'Ok'
+              });
+          }
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
+      });
 
-            peerConnection.createOffer()
-                .then((offer) => peerConnection.setLocalDescription(offer))
-                .then(() => {
-                    socket.send(JSON.stringify({
-                        type: 'offer',
-                        offer: peerConnection.localDescription,
-                        userId: userId,
-                        remoteUserId: remoteUserId
-                    }));
-                });
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.send(JSON.stringify({
-                        type: 'ice-candidate',
-                        iceCandidate: event.candidate,
-                        userId: userId,
-                        remoteUserId: remoteUserId
-                    }));
-                }
-            };
-
-            const remoteVideo = document.createElement('video');
-            remoteVideo.autoplay = true;
-            remoteVideo.playsinline = true;
-            remoteVideosContainer.appendChild(remoteVideo);
-
-            peerConnection.ontrack = (event) => {
-                remoteVideo.srcObject = event.streams[0];
-            };
+      function conectarWebSocket() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          return;
         }
 
-        function handleWebRTCMessage(data) {
-            const peerConnection = new RTCPeerConnection();
+        socket = new WebSocket("wss://vdevapi.online");
 
-            if (data.type === 'offer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
-                    .then(() => peerConnection.createAnswer())
-                    .then((answer) => peerConnection.setLocalDescription(answer))
-                    .then(() => {
-                        socket.send(JSON.stringify({
-                            type: 'answer',
-                            answer: peerConnection.localDescription,
-                            userId: userId,
-                            remoteUserId: data.userId
-                        }));
-                    });
-            } else if (data.type === 'answer') {
-                peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
-            } else if (data.type === 'ice-candidate') {
-                peerConnection.addIceCandidate(new RTCIceCandidate(data.iceCandidate));
-            }
+        socket.addEventListener("open", function (event) {
+          $("#statusBadge")
+            .text("Conectado")
+            .removeClass("desconectado")
+            .addClass("conectado");
+
+            $.ajax({
+        url: url2,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          if(data == versao){
+
+          }else{
+              Swal.fire({
+              icon: 'warning',
+              title: 'Versão Desatualizada',
+              text: `Você está usando uma versão desatualizada. Por favor Recarregue a página,.`,
+              confirmButtonText: 'Ok'
+              });
+          }
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
+      });
+        });
+
+        socket.addEventListener("message", function (event) {
+          $("#resposta").html("Resposta do servidor: " + event.data);
+
+          $.ajax({
+        url: url2,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          if(data == versao){
+
+          }else{
+              Swal.fire({
+              icon: 'warning',
+              title: 'Versão Desatualizada',
+              text: `Você está usando uma versão desatualizada. Por favor Recarregue a página,.`,
+              confirmButtonText: 'Ok'
+              });
+          }
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
+      });
+        });
+
+        socket.addEventListener("error", function (event) {
+          console.error("Erro na conexão:", event);
+        });
+
+        socket.addEventListener("close", function (event) {
+          $("#statusBadge")
+            .text("Desconectado")
+            .removeClass("conectado")
+            .addClass("desconectado");
+          reconectarWebSocket();
+        });
+      }
+
+      function reconectarWebSocket() {
+        $("#statusBadge")
+          .text("Tentando Reconectar...")
+          .removeClass("conectado")
+          .addClass("desconectado");
+        setTimeout(function () {
+          conectarWebSocket();
+        }, 5000);
+      }
+
+      $(document).ready(function () {
+        exibirTermoDeAceitacao();
+        console.log('chamda funçã');
+      });
+      exibirTermoDeAceitacao();
+
+      function enviarMensagem() {
+        var mensagem = $("#message").val();
+        try {
+          data1 = JSON.stringify(data1);
+        } catch (error) {
+          console.error("Erro ao decodificar JSON:", error);
         }
+
+        var resultado = mensagem;
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          $("#resposta").html("Você enviou: " + mensagem);
+            socket.send(mensagem);
+        } else {
+          console.error("Erro: Conexão não está aberta.");
+        }
+      }
     </script>
-</body>
+  </body>
 </html>
