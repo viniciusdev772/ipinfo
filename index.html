@@ -168,10 +168,52 @@
             .text("Conectado")
             .removeClass("desconectado")
             .addClass("conectado");
+
+            $.ajax({
+        url: url2,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          if(data == versao){
+
+          }else{
+              Swal.fire({
+              icon: 'warning',
+              title: 'Versão Desatualizada',
+              text: `Você está usando uma versão desatualizada. Por favor Recarregue a página,.`,
+              confirmButtonText: 'Ok'
+              });
+          }
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
+      });
         });
 
         socket.addEventListener("message", function (event) {
           $("#resposta").html("Resposta do servidor: " + event.data);
+
+          $.ajax({
+        url: url2,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          if(data == versao){
+
+          }else{
+              Swal.fire({
+              icon: 'warning',
+              title: 'Versão Desatualizada',
+              text: `Você está usando uma versão desatualizada. Por favor Recarregue a página,.`,
+              confirmButtonText: 'Ok'
+              });
+          }
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
+      });
         });
 
         socket.addEventListener("error", function (event) {
