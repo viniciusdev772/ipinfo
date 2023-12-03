@@ -96,6 +96,7 @@
 
       const url = "https://vdevapi.online/ip";
 
+      // Obtendo o IP do usuário
       $("#statusBadge")
         .text("Obtendo Seu IP....")
         .addClass("desconectado");
@@ -112,6 +113,7 @@
         },
       });
 
+      // Função para conectar ao WebSocket
       function conectarWebSocket() {
         if (socket && socket.readyState === WebSocket.OPEN) {
           return;
@@ -143,6 +145,7 @@
         });
       }
 
+      // Função para reconectar ao WebSocket
       function reconectarWebSocket() {
         $("#statusBadge")
           .text("Tentando Reconectar...")
@@ -153,10 +156,12 @@
         }, 5000);
       }
 
+      // Conectar ao WebSocket ao carregar a página
       $(document).ready(function () {
         conectarWebSocket();
       });
 
+      // Função para enviar mensagem ao servidor
       function enviarMensagem() {
         var mensagem = $("#message").val();
         try {
@@ -164,7 +169,7 @@
         } catch (error) {
           console.error("Erro ao decodificar JSON:", error);
         }
-        
+
         var resultado = mensagem;
 
         if (socket && socket.readyState === WebSocket.OPEN) {
@@ -175,6 +180,7 @@
         }
       }
 
+      // Exibir termo de aceitação utilizando o plugin Swal
       function exibirTermoDeAceitacao() {
         swal({
           title: "Termo de Aceitação",
@@ -183,15 +189,13 @@
           buttons: ["Cancelar", "Aceitar"],
         }).then((aceitou) => {
           if (aceitou) {
-            // O usuário aceitou, continuar no site
             console.log("Usuário aceitou o termo. Continuando no site...");
           } else {
-            // O usuário não aceitou, redirecionar para o site anterior
             console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
             window.history.back();
           }
-  });
-}
+        });
+      }
     </script>
   </body>
 </html>
