@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Live Stream</title>
+</head>
+<body>
+    <h1>WebRTC Live Stream</h1>
+    <video id="localVideo" autoplay muted playsinline></video>
+    <div id="remoteVideos"></div>
+
+    <script>
+        const userId = Math.random().toString(36).substring(7);
+        const socket = new WebSocket('ws://seu-servidor:3000');
+
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideosContainer = document.getElementById('remoteVideos');
+
+        navigator.mediaDevices.getUserMedia({ video: true, audio: false })
+            .then((stream) => {
+                localVideo.srcObject = stream;
+                socket.send(JSON.stringify({ type: 'new-user', userId: userId }));
+
+                socket.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+
+                    if (data.type === 'new-user' && data.userId !== userId) {
+                        createPeerConnection(data.userId, stream);
+                    }
+                };
+            })
+            .catch((error) => console.error('Erro ao acessar a webcam:', error));
+
+        function createPeerConnection(remoteUserId, stream) {
+            const peerConnection = new RTCPeerConnection();
+
+            stream.getTracks().forEach((track) => {
+                peerConnection.addTrack(track, stream);
+            });
+
+            peerConnection.createOffer()
+                .then((offer) => peerConnection.setLocalDescription(offer))
+                .then(() => {
+                    socket.send(JSON.stringify({
+                        type: 'offer',
+                        offer: peerConnection.localDescription,
+                        userId: userId,
+                        remoteUserId: remoteUserId
+                    }));
+                });
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.send(JSON.stringify({
+                        type: 'ice-candidate',
+                        iceCandidate: event.candidate,
+                        userId: userId,
+                        remoteUserId: remoteUserId
+                    }));
+                }
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+
+                if (data.userId === userId) return;
+
+                if (data.type === 'offer') {
+                    peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer))
+                        .then(() => peerConnection.createAnswer())
+                        .then((answer) => peerConnection.setLocalDescription(answer))
+                        .then(() => {
+                            socket.send(JSON.stringify({
+                                type: 'answer',
+                                answer: peerConnection.localDescription,
+                                userId: userId,
+                                remoteUserId: data.userId
+                            }));
+                        });
+                } else if (data.type === 'answer') {
+                    peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                } else if (data.type === 'ice-candidate') {
+                    peerConnection.addIceCandidate(new RTCIceCandidate(data.iceCandidate));
+                }
+            };
+
+            const remoteVideo = document.createElement('video');
+            remoteVideo.autoplay = true;
+            remoteVideo.playsinline = true;
+            remoteVideosContainer.appendChild(remoteVideo);
+
+            peerConnection.ontrack = (event) => {
+                remoteVideo.srcObject = event.streams[0];
+            };
+        }
+    </script>
+</body>
+</html>

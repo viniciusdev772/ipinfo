@@ -2,7 +2,7 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const ipinfo = require('ipinfo');
-
+const { v4: uuidv4 } = require('uuid');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -27,6 +27,12 @@ app.get('/', async (req, res) => {
   const enderecoIp = obterEnderecoIp(req);
   res.json({ enderecoIp });
 });
+
+
+app.get('/rtc', (req, res) => {
+  res.sendFile(__dirname + '/webrtc.html');
+});
+
 
 app.get('/websocketversao', async (req, res) => {
   try {
@@ -122,6 +128,8 @@ app.get('/ip', async (req, res) => {
 });
 
 // Evento de conexão WebSocket
+
+/*
 const connections = new Set();
 
 wss.on('connection', (ws,req) => {
@@ -147,6 +155,37 @@ wss.on('connection', (ws,req) => {
 
     // Remover a conexão do conjunto ao fechar
     //connections.delete(ws);
+  });
+});
+*/
+
+
+
+const connections = new Map();
+
+
+/*
+Video Broadcast
+*/
+
+wss.on('connection', (socket) => {
+  const userId = uuidv4();
+  connections.set(userId, socket);
+
+  console.log(`Usuário conectado - ID: ${userId}`);
+
+  socket.on('close', () => {
+    connections.delete(userId);
+    console.log(`Usuário desconectado - ID: ${userId}`);
+  });
+
+  socket.on('message', (message) => {
+    // Broadcast da mensagem para todos os outros clientes
+    connections.forEach((connection, id) => {
+      if (id !== userId && connection.readyState === WebSocket.OPEN) {
+        connection.send(message);
+      }
+    });
   });
 });
 
