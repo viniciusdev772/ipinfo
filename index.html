@@ -90,6 +90,23 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
+
+function exibirTermoDeAceitacao() {
+        swal({
+          title: "Termo de Aceitação",
+          text: "Ao continuar, você concorda com a coleta e utilização do seu endereço IP para fins de verificação de funcionalidade nas regiões brasileiras, em conformidade com as leis de privacidade e proteção de dados do Brasil.",
+          icon: "info",
+          buttons: ["Cancelar", "Aceitar"],
+        }).then((aceitou) => {
+          if (aceitou) {
+            console.log("Usuário aceitou o termo. Continuando no site...");
+            conectarWebSocket(); // Conectar ao WebSocket após aceitar o termo
+          } else {
+            console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
+            window.history.back();
+          }
+        });
+      }
       var socket;
       var data1;
       exibirTermoDeAceitacao();
@@ -181,21 +198,7 @@
       }
 
       // Exibir termo de aceitação utilizando o plugin Swal
-      function exibirTermoDeAceitacao() {
-        swal({
-          title: "Termo de Aceitação",
-          text: "Ao continuar, você concorda com a coleta e utilização do seu endereço IP conforme descrito no Termo de Aceitação.",
-          icon: "info",
-          buttons: ["Cancelar", "Aceitar"],
-        }).then((aceitou) => {
-          if (aceitou) {
-            console.log("Usuário aceitou o termo. Continuando no site...");
-          } else {
-            console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
-            window.history.back();
-          }
-        });
-      }
+      
     </script>
   </body>
 </html>
