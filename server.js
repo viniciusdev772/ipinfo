@@ -29,7 +29,7 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/websocketversao', async (req, res) => {
-  res.send('1');
+  res.send('17');
 });
 
 function checkXvideosUrl(url) {
