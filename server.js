@@ -3,6 +3,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const ipinfo = require('ipinfo');
 const { v4: uuidv4 } = require('uuid');
+const path = require('path');
 const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
@@ -22,6 +23,9 @@ function obterEnderecoIp(req) {
 
   return enderecoIp;
 }
+
+
+app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/', async (req, res) => {
   const enderecoIp = obterEnderecoIp(req);
@@ -172,54 +176,26 @@ const io = socketIo(server);
 // A rota /websocket lida apenas com conexões WebSocket
 
 
-const connections = new Map();
-
 io.on('connection', (socket) => {
-  socket.on('new-user', (userId) => {
-    console.log(`Usuário conectado - ID: ${userId}`);
-    connections.set(userId, socket);
+  console.log(`Usuário conectado - ID: ${socket.id}`);
 
-    // Informa todos os clientes sobre o novo usuário
-    io.emit('new-user', userId);
+  // Quando um novo usuário se conecta, informa todos os usuários existentes sobre o novo usuário
+  io.emit('new-user', socket.id);
 
-    // Envia a lista de usuários existentes para o novo usuário
-    const existingUsers = Array.from(connections.keys()).filter(id => id !== userId);
-    socket.emit('existing-users', existingUsers);
+  // Escuta o sinal enviado pelo novo usuário e encaminha para o destinatário
+  socket.on('signal', (data) => {
+      console.log(`Sinal recebido de ${socket.id}:`, data);
+      io.to(data.target).emit('signal', {
+          target: data.target,
+          sender: socket.id,
+          signal: data.signal,
+      });
   });
 
-  socket.on('offer', (data) => {
-    // Encaminha a oferta para o destinatário
-    const destinationUser = connections.get(data.remoteUserId);
-    if (destinationUser) {
-      destinationUser.emit('offer', { offer: data.offer, userId: data.userId });
-    }
-  });
-
-  socket.on('answer', (data) => {
-    // Encaminha a resposta para o destinatário
-    const destinationUser = connections.get(data.remoteUserId);
-    if (destinationUser) {
-      destinationUser.emit('answer', { answer: data.answer, userId: data.userId });
-    }
-  });
-
-  socket.on('ice-candidate', (data) => {
-    // Encaminha o candidato ICE para o destinatário
-    const destinationUser = connections.get(data.remoteUserId);
-    if (destinationUser) {
-      destinationUser.emit('ice-candidate', { iceCandidate: data.iceCandidate, userId: data.userId });
-    }
-  });
-
+  // Escuta o evento de desconexão e informa a todos os usuários
   socket.on('disconnect', () => {
-    const userId = Array.from(connections.entries()).find(([key, value]) => value === socket)?.[0];
-    if (userId) {
-      console.log(`Usuário desconectado - ID: ${userId}`);
-      connections.delete(userId);
-
-      // Informa todos os clientes sobre o usuário desconectado
-      io.emit('user-disconnected', userId);
-    }
+      console.log(`Usuário desconectado - ID: ${socket.id}`);
+      io.emit('user-disconnected', socket.id);
   });
 });
 

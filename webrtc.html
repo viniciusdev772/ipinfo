@@ -11,60 +11,39 @@
     <div style="display: flex;">
         <div style="flex: 1;">
             <h2>Local</h2>
-            <video id="localVideo" autoplay muted playsinline style="width: 100%;"></video>
+            <video id="localVideo" autoplay playsinline style="width: 100%;"></video>
         </div>
         <div style="flex: 1;">
             <h2>Remoto</h2>
-            <div id="remoteVideos" style="display: flex; flex-wrap: wrap;"></div>
+            <video id="remoteVideo" autoplay playsinline style="width: 100%;"></video>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/simple-peer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.0.1/dist/simplepeer.min.js"></script>
     <script src="https://cdn.socket.io/4.1.3/socket.io.min.js"></script>
 
     <script>
-        const userId = Math.random().toString(36).substring(7);
-        const socket = io('wss://vdevapi.online');
-
         const localVideo = document.getElementById('localVideo');
-        const remoteVideosContainer = document.getElementById('remoteVideos');
-        const peers = {};
+        const remoteVideo = document.getElementById('remoteVideo');
+        let localStream;
+        let peer;
+
+        const socket = io();
 
         navigator.mediaDevices.getUserMedia({ video: true, audio: false })
             .then((stream) => {
+                localStream = stream;
                 localVideo.srcObject = stream;
-
-                socket.emit('new-user', userId);
-
-                socket.on('new-user', (newUserId) => {
-                    console.log(`Novo usuário conectado - ID: ${newUserId}`);
-                    createPeerConnection(newUserId, stream);
-                });
-
-                socket.on('existing-users', (existingUsers) => {
-                    existingUsers.forEach((existingUserId) => {
-                        console.log(`Usuário existente conectado - ID: ${existingUserId}`);
-                        createPeerConnection(existingUserId, stream);
-                    });
-                });
-
-                socket.on('user-disconnected', (disconnectedUserId) => {
-                    console.log(`Usuário desconectado - ID: ${disconnectedUserId}`);
-                    const peer = peers[disconnectedUserId];
-                    if (peer) {
-                        peer.destroy();
-                        delete peers[disconnectedUserId];
-                        removeVideoElement(disconnectedUserId);
-                    }
-                });
+                initializePeerConnection();
             })
             .catch((error) => console.error('Erro ao acessar a webcam:', error));
 
-        function createPeerConnection(remoteUserId, stream) {
-            const peer = new SimplePeer({ initiator: true, trickle: false, stream });
+        function initializePeerConnection() {
+            peer = new SimplePeer({ initiator: true, trickle: false, stream: localStream });
 
             peer.on('signal', (data) => {
-                socket.emit('offer', { offer: data, userId, remoteUserId });
+                // Envia o sinal para o servidor, que encaminhará para o destinatário
+                socket.emit('signal', { target: otherUserId, signal: data });
             });
 
             peer.on('connect', () => {
@@ -72,49 +51,30 @@
             });
 
             peer.on('stream', (remoteStream) => {
-                console.log(`Recebendo stream de ${remoteUserId}`);
-                const remoteVideo = createVideoElement(remoteUserId);
                 remoteVideo.srcObject = remoteStream;
             });
-
-            socket.on('offer', (data) => {
-                if (data.userId === remoteUserId) {
-                    peer.signal(data.offer);
-                }
-            });
-
-            socket.on('answer', (data) => {
-                if (data.userId === remoteUserId) {
-                    peer.signal(data.answer);
-                }
-            });
-
-            socket.on('ice-candidate', (data) => {
-                if (data.userId === remoteUserId) {
-                    peer.signal(data.iceCandidate);
-                }
-            });
-
-            peers[remoteUserId] = peer;
         }
 
-        function createVideoElement(remoteUserId) {
-            const remoteVideo = document.createElement('video');
-            remoteVideo.autoplay = true;
-            remoteVideo.playsinline = true;
-            remoteVideo.style.width = '100%';
-            remoteVideo.style.margin = '5px';
-            remoteVideo.id = `video-${remoteUserId}`;
-            remoteVideosContainer.appendChild(remoteVideo);
-            return remoteVideo;
-        }
-
-        function removeVideoElement(remoteUserId) {
-            const remoteVideo = document.getElementById(`video-${remoteUserId}`);
-            if (remoteVideo) {
-                remoteVideo.remove();
+        socket.on('signal', (data) => {
+            // Recebe o sinal do outro usuário e adiciona ao peer connection
+            if (data.target === socket.id) {
+                peer.signal(data.signal);
             }
-        }
+        });
+
+        socket.on('new-user', (userId) => {
+            // Outro usuário se conectou
+            console.log(`Novo usuário conectado - ID: ${userId}`);
+            // Salva o ID do outro usuário para enviar sinais
+            otherUserId = userId;
+        });
+
+        socket.on('user-disconnected', (userId) => {
+            // Outro usuário desconectou
+            console.log(`Usuário desconectado - ID: ${userId}`);
+            // Encerra a conexão peer
+            peer.destroy();
+        });
     </script>
 </body>
 </html>
