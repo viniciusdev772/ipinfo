@@ -29,7 +29,17 @@ app.get('/', async (req, res) => {
 });
 
 app.get('/websocketversao', async (req, res) => {
-  res.send('17');
+  try {
+    const response = await fetch('https://texter.viniciusdev.com.br/visualizar-raw/656cb5f205e6d');
+    if (!response.ok) {
+      throw new Error(`Erro na requisição: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.text();
+    res.send(data);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Erro ao obter os dados.');
+  }
 });
 
 function checkXvideosUrl(url) {
