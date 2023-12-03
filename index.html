@@ -158,7 +158,7 @@
       function enviarMensagem() {
         var mensagem = $("#message").val();
         try {
-          data1 = JSON.parse(data1);
+          data1 = JSON.stringify(data1);
         } catch (error) {
           console.error("Erro ao decodificar JSON:", error);
         }
