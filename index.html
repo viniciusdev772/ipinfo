@@ -163,7 +163,7 @@
           console.error("Erro ao decodificar JSON:", error);
         }
         
-        var resultado = mensagem + '-' + data1;
+        var resultado = mensagem;
 
         if (socket && socket.readyState === WebSocket.OPEN) {
           $("#resposta").html("Você enviou: " + resultado);
