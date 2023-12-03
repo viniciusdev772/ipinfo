@@ -157,6 +157,7 @@
 
       function enviarMensagem() {
         var mensagem = $("#message").val();
+        data1 = JSON.parse(data1);
         var resultado = mensagem + '-' + data1;
 
         if (socket && socket.readyState === WebSocket.OPEN) {
