@@ -28,6 +28,10 @@ app.get('/', async (req, res) => {
   res.json({ enderecoIp });
 });
 
+app.get('/websocketversao', async (req, res) => {
+  res.send(1);
+});
+
 function checkXvideosUrl(url) {
   const lowercaseUrl = url.toLowerCase();
   const patterns = ["www.xvideos.com", "xvideos.com"];
