@@ -88,9 +88,11 @@
     <div id="resposta"></div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
       var socket;
       var data1;
+      exibirTermoDeAceitacao();
 
       const url = "https://vdevapi.online/ip";
 
@@ -172,6 +174,24 @@
           console.error("Erro: Conexão não está aberta.");
         }
       }
+
+      function exibirTermoDeAceitacao() {
+        swal({
+          title: "Termo de Aceitação",
+          text: "Ao continuar, você concorda com a coleta e utilização do seu endereço IP conforme descrito no Termo de Aceitação.",
+          icon: "info",
+          buttons: ["Cancelar", "Aceitar"],
+        }).then((aceitou) => {
+          if (aceitou) {
+            // O usuário aceitou, continuar no site
+            console.log("Usuário aceitou o termo. Continuando no site...");
+          } else {
+            // O usuário não aceitou, redirecionar para o site anterior
+            console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
+            window.history.back();
+          }
+  });
+}
     </script>
   </body>
 </html>
