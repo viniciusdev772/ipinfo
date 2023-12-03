@@ -118,6 +118,7 @@
     }
 
     function reconectarWebSocket() {
+      $('#statusBadge').text('Tentando Reconectar...').removeClass('conectado').addClass('desconectado');
       setTimeout(function() {
         conectarWebSocket();
       }, 5000);
