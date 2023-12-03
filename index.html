@@ -1,144 +1,171 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Formulário WebSocket</title>
-  <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-      background-color: #f4f4f4;
-    }
-
-    form {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      width: 300px;
-      margin-bottom: 20px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #333;
-    }
-
-    input {
-      width: 100%;
-      padding: 8px;
-      margin-bottom: 12px;
-      box-sizing: border-box;
-    }
-
-    button {
-      background-color: #4caf50;
-      color: #fff;
-      padding: 10px 15px;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #45a049;
-    }
-
-    #resposta {
-      margin-top: 15px;
-      padding: 10px;
-      background-color: #eee;
-      border-radius: 4px;
-    }
-
-    #statusBadge {
-      margin-top: 10px;
-      padding: 8px;
-      border-radius: 4px;
-      color: #fff;
-      font-weight: bold;
-    }
-
-    .conectado {
-      background-color: #4caf50;
-    }
-
-    .desconectado {
-      background-color: #f44336;
-    }
-  </style>
-</head>
-<body>
-
-  <form id="myForm">
-    <label for="message">Mensagem:</label>
-    <input type="text" id="message" name="message" required>
-
-    <button type="button" onclick="enviarMensagem()">Enviar Mensagem</button>
-  </form>
-
-  <div id="statusBadge" class="desconectado">Desconectado</div>
-
-  <div id="resposta"></div>
-
-  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-  <script>
-    var socket;
-
-    function conectarWebSocket() {
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Formulário WebSocket</title>
+    <style>
+      body {
+        font-family: "Arial", sans-serif;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        margin: 0;
+        background-color: #f4f4f4;
       }
 
-      socket = new WebSocket('wss://vdevapi.online');
+      form {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        width: 300px;
+        margin-bottom: 20px;
+      }
 
-      socket.addEventListener('open', function (event) {
-        $('#statusBadge').text('Conectado').removeClass('desconectado').addClass('conectado');
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #333;
+      }
+
+      input {
+        width: 100%;
+        padding: 8px;
+        margin-bottom: 12px;
+        box-sizing: border-box;
+      }
+
+      button {
+        background-color: #4caf50;
+        color: #fff;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      #resposta {
+        margin-top: 15px;
+        padding: 10px;
+        background-color: #eee;
+        border-radius: 4px;
+      }
+
+      #statusBadge {
+        margin-top: 10px;
+        padding: 8px;
+        border-radius: 4px;
+        color: #fff;
+        font-weight: bold;
+      }
+
+      .conectado {
+        background-color: #4caf50;
+      }
+
+      .desconectado {
+        background-color: #f44336;
+      }
+    </style>
+  </head>
+  <body>
+    <form id="myForm">
+      <label for="message">Mensagem:</label>
+      <input type="text" id="message" name="message" required />
+
+      <button type="button" onclick="enviarMensagem()">Enviar Mensagem</button>
+    </form>
+
+    <div id="statusBadge" class="desconectado">Desconectado</div>
+
+    <div id="resposta"></div>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+      var socket;
+      var data1;
+
+      const url = "https://vdevapi.online/api";
+
+      $("#statusBadge")
+        .text("Obtendo Seu IP....")
+        .addClass("desconectado");
+
+      $.ajax({
+        url: url,
+        type: "GET",
+        success: function (data) {
+          console.log("Dados recebidos:", data);
+          data1 = data;
+        },
+        error: function (error) {
+          console.error("Erro na requisição:", error);
+        },
       });
 
-      socket.addEventListener('message', function (event) {
-        $('#resposta').html('Resposta do servidor: ' + event.data);
-      });
+      function conectarWebSocket() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          return;
+        }
 
-      socket.addEventListener('error', function (event) {
-        console.error('Erro na conexão:', event);
-      });
+        socket = new WebSocket("wss://vdevapi.online");
 
-      socket.addEventListener('close', function (event) {
-        $('#statusBadge').text('Desconectado').removeClass('conectado').addClass('desconectado');
-        reconectarWebSocket();
-      });
-    }
+        socket.addEventListener("open", function (event) {
+          $("#statusBadge")
+            .text("Conectado")
+            .removeClass("desconectado")
+            .addClass("conectado");
+        });
 
-    function reconectarWebSocket() {
-      $('#statusBadge').text('Tentando Reconectar...').removeClass('conectado').addClass('desconectado');
-      setTimeout(function() {
+        socket.addEventListener("message", function (event) {
+          $("#resposta").html("Resposta do servidor: " + event.data);
+        });
+
+        socket.addEventListener("error", function (event) {
+          console.error("Erro na conexão:", event);
+        });
+
+        socket.addEventListener("close", function (event) {
+          $("#statusBadge")
+            .text("Desconectado")
+            .removeClass("conectado")
+            .addClass("desconectado");
+          reconectarWebSocket();
+        });
+      }
+
+      function reconectarWebSocket() {
+        $("#statusBadge")
+          .text("Tentando Reconectar...")
+          .removeClass("conectado")
+          .addClass("desconectado");
+        setTimeout(function () {
+          conectarWebSocket();
+        }, 5000);
+      }
+
+      $(document).ready(function () {
         conectarWebSocket();
-      }, 5000);
-    }
+      });
 
-    $(document).ready(function () {
-      conectarWebSocket();
-    });
+      function enviarMensagem() {
+        var mensagem = $("#message").val();
+        var resultado = mensagem + '-' + data1;
 
-    function enviarMensagem() {
-      var mensagem = $('#message').val();
-      
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        $('#resposta').html('Você enviou: ' + mensagem);
-        socket.send(mensagem);
-      } else {
-        console.error('Erro: Conexão não está aberta.');
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          $("#resposta").html("Você enviou: " + resultado);
+          socket.send(resultado);
+        } else {
+          console.error("Erro: Conexão não está aberta.");
+        }
       }
-    }
-  </script>
-
-</body>
+    </script>
+  </body>
 </html>
