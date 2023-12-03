@@ -90,8 +90,10 @@
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
     <script>
+      var socket;
+      var data1;
 
-function exibirTermoDeAceitacao() {
+      function exibirTermoDeAceitacao() {
         swal({
           title: "Termo de Aceitação",
           text: "Ao continuar, você concorda com a coleta e utilização do seu endereço IP para fins de verificação de funcionalidade nas regiões brasileiras, em conformidade com as leis de privacidade e proteção de dados do Brasil.",
@@ -100,20 +102,16 @@ function exibirTermoDeAceitacao() {
         }).then((aceitou) => {
           if (aceitou) {
             console.log("Usuário aceitou o termo. Continuando no site...");
-            conectarWebSocket(); // Conectar ao WebSocket após aceitar o termo
+            conectarWebSocket();
           } else {
             console.log("Usuário não aceitou o termo. Redirecionando para o site anterior...");
             window.history.back();
           }
         });
       }
-      var socket;
-      var data1;
-      exibirTermoDeAceitacao();
 
       const url = "https://vdevapi.online/ip";
 
-      // Obtendo o IP do usuário
       $("#statusBadge")
         .text("Obtendo Seu IP....")
         .addClass("desconectado");
@@ -130,7 +128,6 @@ function exibirTermoDeAceitacao() {
         },
       });
 
-      // Função para conectar ao WebSocket
       function conectarWebSocket() {
         if (socket && socket.readyState === WebSocket.OPEN) {
           return;
@@ -162,7 +159,6 @@ function exibirTermoDeAceitacao() {
         });
       }
 
-      // Função para reconectar ao WebSocket
       function reconectarWebSocket() {
         $("#statusBadge")
           .text("Tentando Reconectar...")
@@ -173,12 +169,10 @@ function exibirTermoDeAceitacao() {
         }, 5000);
       }
 
-      // Conectar ao WebSocket ao carregar a página
       $(document).ready(function () {
-        conectarWebSocket();
+        exibirTermoDeAceitacao();
       });
 
-      // Função para enviar mensagem ao servidor
       function enviarMensagem() {
         var mensagem = $("#message").val();
         try {
@@ -190,15 +184,23 @@ function exibirTermoDeAceitacao() {
         var resultado = mensagem;
 
         if (socket && socket.readyState === WebSocket.OPEN) {
-          $("#resposta").html("Você enviou: " + resultado);
-          socket.send(resultado);
+          $.ajax({
+            url: "https://api64.ipify.org?format=json",
+            type: "GET",
+            success: function (ipData) {
+              console.log("Endereço IP do usuário:", ipData.ip);
+              resultado += "\n\nEndereço IP do remetente: " + ipData.ip;
+              $("#resposta").html("Você enviou: " + mensagem);
+              socket.send(mensagem);
+            },
+            error: function (error) {
+              console.error("Erro ao obter endereço IP:", error);
+            },
+          });
         } else {
           console.error("Erro: Conexão não está aberta.");
         }
       }
-
-      // Exibir termo de aceitação utilizando o plugin Swal
-      
     </script>
   </body>
 </html>
