@@ -1,11 +1,11 @@
 const express = require('express');
 const http = require('http');
-const socketIO = require('socket.io');
+const WebSocket = require('ws');
 const ipinfo = require('ipinfo');
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIO(server);
+const wss = new WebSocket.Server({ server });
 
 const port = process.env.PORT || 3000;
 
@@ -32,17 +32,22 @@ function checkXvideosUrl(url) {
   const lowercaseUrl = url.toLowerCase();
   const patterns = ["www.xvideos.com", "xvideos.com"];
 
-  return patterns.some(pattern => lowercaseUrl.includes(pattern));
+  for (const pattern of patterns) {
+    if (lowercaseUrl.includes(pattern)) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
-app.get('/xvideos', async (req, res) => {
+app.get('/xvideos', (req, res) => {
   const { XVDL } = require("./xvdl/index");
   const targetLink = req.query.url;
 
   if (targetLink && targetLink.trim() !== '') {
     if (checkXvideosUrl(targetLink)) {
-      try {
-        const inf = await XVDL.getInfo(targetLink);
+      XVDL.getInfo(targetLink).then((inf) => {
         const jsonResponse = {
           statusCode: 200,
           status: "sucesso",
@@ -51,76 +56,78 @@ app.get('/xvideos', async (req, res) => {
           link: inf.streams.hq,
         };
         res.json(jsonResponse);
-      } catch (error) {
-        const jsonResponse = {
-          statusCode: 500,
-          status: "Erro ao obter informações do Xvideos",
-        };
-        res.status(500).json(jsonResponse);
-      }
+      });
     } else {
       const jsonResponse = {
         statusCode: 401,
-        status: "Link não autorizado, verifique seu link do Xvideos",
+        status: "Link não Autorizado, Verifique seu Link do Xvideos",
       };
       res.status(401).json(jsonResponse);
     }
   } else {
     const jsonResponse = {
       statusCode: 401,
-      status: "Unauthorized, check your link",
+      status: "Unauthorized, Check your link",
     };
     res.status(401).json(jsonResponse);
   }
 });
 
 app.get('/ip/:ipAddress', async (req, res) => {
-  const targetIP = req.params.ipAddress ? req.params.ipAddress.trim() : obterEnderecoIp(req);
+  let targetIP;
 
-  try {
-    const data = await ipinfo(targetIP);
-    delete data.readme;
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
+  if (req.params.ipAddress && req.params.ipAddress.trim() !== '') {
+    targetIP = req.params.ipAddress.trim();
+  } else {
+    targetIP = obterEnderecoIp(req);
   }
+
+  ipinfo(targetIP, (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao obter informações do IP específico.' });
+    } else {
+      delete data.readme;
+      res.json(data);
+    }
+  });
 });
 
 app.get('/ip', async (req, res) => {
   const targetIP = obterEnderecoIp(req);
 
-  try {
-    const data = await ipinfo(targetIP);
-    delete data.readme;
-    res.json(data);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
-  }
-});
-
-// Evento de conexão Socket.io
-io.on('connection', (socket) => {
-  console.log('Usuário conectado');
-
-  // Evento de mensagem
-  socket.on('chat message', (msg) => {
-    console.log(`Mensagem recebida: ${msg}`);
-
-    // Enviando a mensagem para todos os clientes conectados
-    io.emit('chat message', msg);
-  });
-
-  // Desconexão de socket
-  socket.on('disconnect', () => {
-    console.log('Usuário desconectado');
+  ipinfo(targetIP, (err, data) => {
+    if (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Erro ao obter informações do IP padrão.' });
+    } else {
+      delete data.readme;
+      res.json(data);
+    }
   });
 });
 
-// A rota /websocket lida apenas com conexões Socket.io
+// Evento de conexão WebSocket
+wss.on('connection', (ws) => {
+  console.log('Conexão WebSocket estabelecida.');
+
+  // Evento de mensagem recebida do cliente WebSocket
+  ws.on('message', (message) => {
+    console.log(`Mensagem WebSocket recebida: ${message}`);
+
+    // Enviar uma resposta de volta para o cliente WebSocket
+    ws.send(`Resposta do servidor: ${message}`);
+  });
+
+  // Evento de fechamento da conexão WebSocket
+  ws.on('close', () => {
+    console.log('Conexão WebSocket fechada.');
+  });
+});
+
+// A rota /websocket lida apenas com conexões WebSocket
 app.get('/websocket', (req, res) => {
-  res.status(200).send('Socket.io endpoint');
+  res.status(200).send('WebSocket endpoint');
 });
 
 server.listen(port, "0.0.0.0", () => {
