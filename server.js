@@ -151,7 +151,7 @@ wss.on('connection', (ws,req) => {
 });
 
 // A rota /websocket lida apenas com conexões WebSocket
-app.use(express.static(__dirname));
+
 
 // Rota principal
 app.get('/websocket', (req, res) => {
