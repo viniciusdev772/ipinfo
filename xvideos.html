@@ -60,12 +60,24 @@
             $("#resultado").hide().html(cardHtml).fadeIn(500);
           },
           error: function(jqXHR, textStatus, errorThrown) {
-            // Exibe mensagens de erro em caso de falha na requisição
-            var errorMessage = "<p class='text-red-500 mt-4'>Erro na requisição: " + textStatus + ", " + errorThrown + "</p>";
-            
-            // Exibe a mensagem de erro com uma animação
-            $("#resultado").hide().html(errorMessage).fadeIn(500);
-          }
+                    // Exibe mensagens de erro em caso de falha na requisição
+                    var errorMessage = "<p class='text-red-500 mt-4'>Erro na requisição: " + textStatus + ", " + errorThrown;
+
+                    // Se o erro for um JSON, tenta extrair o detalhe da chave 'status'
+                    try {
+                        var jsonError = JSON.parse(jqXHR.responseText);
+                        if (jsonError && jsonError.status) {
+                            errorMessage += "<br>Detalhes do erro: " + jsonError.status;
+                        }
+                    } catch (e) {
+                        // Ignora se não puder analisar como JSON
+                    }
+
+                    errorMessage += "</p>";
+
+                    // Exibe a mensagem de erro com uma animação
+                    $("#resultado").hide().html(errorMessage).fadeIn(500);
+                }
         });
       });
     });
