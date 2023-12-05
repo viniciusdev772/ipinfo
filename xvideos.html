@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Requisição GET com jQuery</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    #urlForm {
+      max-width: 400px;
+      margin: 20px 0;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    #urlInput {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      box-sizing: border-box;
+    }
+
+    button {
+      background-color: #e74c3c; /* Cor vermelha */
+      color: #fff;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #c0392b; /* Cor vermelha escura no hover */
+    }
+
+    #resultado {
+      margin-top: 20px;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body>
+
+  <h1>Requisição GET com jQuery</h1>
+
+  <form id="urlForm">
+    <label for="urlInput">Cole o link aqui:</label>
+    <input type="text" id="urlInput" placeholder="Cole o link aqui..." required>
+    <button type="submit">Enviar</button>
+  </form>
+
+  <div id="resultado"></div>
+
+  <script>
+    $(document).ready(function() {
+      $("#urlForm").submit(function(event) {
+        event.preventDefault();
+
+        // Obtém o valor do campo de entrada
+        var url = $("#urlInput").val();
+
+        // Faz a requisição GET
+        $.get("https://vdevapi.online/xvideos?url=" + url)
+          .done(function(data) {
+            // Exibe o resultado em caso de sucesso
+            $("#resultado").html("<p>Resultado da requisição: " + data + "</p>");
+          })
+          .fail(function(jqXHR, textStatus, errorThrown) {
+            // Exibe mensagens de erro em caso de falha na requisição
+            $("#resultado").html("<p>Erro na requisição: " + textStatus + ", " + errorThrown + "</p>");
+          });
+      });
+    });
+  </script>
+
+</body>
+</html>

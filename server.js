@@ -8,7 +8,16 @@ const app = express();
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
+const cors = require('cors');
+
 const port = process.env.PORT || 3000;
+
+const corsOptions = {
+  origin: '*',
+  methods: 'GET',
+};
+
+app.use(cors(corsOptions));
 
 function obterEnderecoIp(req) {
   let enderecoIp;
@@ -35,6 +44,10 @@ app.get('/', async (req, res) => {
 
 app.get('/rtc', (req, res) => {
   res.sendFile(__dirname + '/webrtc.html');
+});
+
+app.get('/web', (req, res) => {
+  res.sendFile(__dirname + '/xvideos.html');
 });
 
 
