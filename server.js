@@ -67,15 +67,15 @@ app.get('/websocketversao', async (req, res) => {
 
 function checkXvideosUrl(url) {
   const lowercaseUrl = url.toLowerCase();
-  const patterns = ["www.xvideos.com", "xvideos.com"];
 
-  for (const pattern of patterns) {
-    if (lowercaseUrl.includes(pattern)) {
-      return true;
-    }
-  }
+  // Lista de padrões de URLs do Xvideos
+  const xvideosPatterns = ["www.xvideos.com", "xvideos.com"];
 
-  return false;
+  // Verifica se a URL contém algum padrão do Xvideos
+  const isXvideos = xvideosPatterns.some(pattern => lowercaseUrl.includes(pattern));
+
+  // Retorna verdadeiro se a URL corresponder a um padrão do Xvideos, caso contrário, retorna falso
+  return isXvideos;
 }
 
 app.get('/xvideos', (req, res) => {
